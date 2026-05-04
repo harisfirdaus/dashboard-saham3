@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Kepemilikan Saham >1%</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --slate-50:#f8fafc;
+  --slate-100:#f1f5f9;
+  --slate-200:#e2e8f0;
+  --slate-400:#94a3b8;
+  --slate-500:#64748b;
+  --slate-700:#334155;
+  --slate-900:#0f172a;
+  --blue-600:#0284c7;
+  --cyan-500:#06b6d4;
+  --indigo-600:#4f46e5;
+  --emerald-500:#10b981;
+  --shadow-sm:0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --radius:1rem;
+  --radius-lg:1.25rem;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:'PT Sans',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--slate-900);
+  -webkit-font-smoothing:antialiased;
+}
+.header{
+  position:relative;
+  background:linear-gradient(115deg,#0f172a 0%,#1e3a8a 45%,#0e7490 100%);
+  color:white;
+  padding:2.25rem 1.5rem 1.75rem;
+  overflow:hidden;
+}
+.header::before{
+  content:"";
+  position:absolute; inset:-20% -10% auto auto;
+  width:560px; height:560px;
+  background:radial-gradient(closest-side,rgba(56,189,248,.25),transparent 70%);
+  filter:blur(30px); pointer-events:none;
+}
+.header-top{display:flex;align-items:center;gap:.9rem;max-width:1280px;margin:0 auto;position:relative}
+.keyword{
+  background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.18);
+  padding:.32rem .7rem;
+  border-radius:999px;
+  font-weight:700;
+  font-size:.78rem;
+  letter-spacing:.06em;
+  backdrop-filter:blur(6px);
+}
+.header h1{
+  font-family:'Lora',serif;
+  font-size:clamp(1.4rem,2.6vw,2.1rem);
+  margin:0;
+  font-weight:700;
+  line-height:1.15;
+}
+.subtitle{
+  max-width:1280px;margin:.6rem auto 0;padding:0 0 0 0;
+  opacity:.9; font-size:.95rem;
+  display:flex; align-items:center; gap:.6rem; flex-wrap:wrap;
+}
+.badge-live{
+  display:inline-flex;align-items:center;gap:.35rem;
+  background:#22c55e;color:#052e12;
+  padding:.18rem .55rem .18rem .45rem;
+  border-radius:999px;font-size:.72rem;font-weight:700;
+  border:1px solid rgba(0,0,0,.05);
+}
+.badge-live::before{
+  content:"";width:7px;height:7px;border-radius:50%;background:#052e12;
+  box-shadow:0 0 0 0 rgba(34,197,94,.7);
+  animation:pulse 1.8s infinite;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(34,197,94,.7)}
+  70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}
+  100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
+}
+
+.filter-bar{
+  position:sticky; top:0; z-index:40;
+  background:rgba(248,250,252,.85);
+  backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--slate-200);
+  padding:1rem 1.5rem;
+  display:grid; grid-template-columns:repeat(12,1fr); gap:.85rem 1rem;
+}
+.filter-item label{
+  display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--slate-500); font-weight:700; margin-bottom:.35rem;
+}
+.filter-item input,.filter-item select{
+  width:100%; padding:.6rem .8rem; border:1px solid var(--slate-200);
+  border-radius:.8rem; background:white; font-size:.92rem;
+  transition:border .15s, box-shadow .15s, transform .05s;
+  outline:none; font-family:inherit; color:var(--slate-900);
+}
+.filter-item input::placeholder{color:var(--slate-400)}
+.filter-item input:focus,.filter-item select:focus{
+  border-color:#0ea5e9; box-shadow:0 0 0 3px rgba(14,165,233,.15);
+}
+.filter-item:nth-child(1){grid-column:span 2}
+.filter-item:nth-child(2){grid-column:span 2}
+.filter-item:nth-child(3){grid-column:span 2}
+.filter-item:nth-child(4){grid-column:span 2}
+.search-item{grid-column:span 3}
+.filter-item:last-child{grid-column:span 1; align-self:end}
+.btn-reset{
+  width:100%; padding:.68rem .9rem; border:none; border-radius:.8rem;
+  background:var(--slate-900); color:white; font-weight:700; cursor:pointer;
+  transition:transform .12s ease, background .2s, box-shadow .2s;
+  box-shadow:var(--shadow-sm);
+}
+.btn-reset:hover{background:#1e293b; transform:translateY(-1px); box-shadow:var(--shadow-md)}
+.btn-reset:active{transform:translateY(0)}
+
+.container{max-width:1280px;margin:0 auto;padding:1.5rem}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.kpi-card{
+  background:var(--card); border:1px solid var(--slate-200); border-radius:var(--radius-lg);
+  padding:1.2rem 1.25rem; position:relative; overflow:hidden;
+  box-shadow:var(--shadow-sm); transition:transform .18s, box-shadow .18s;
+}
+.kpi-card::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(14,165,233,.09),rgba(99,102,241,.09));
+  opacity:0; transition:opacity .25s;
+}
+.kpi-card:hover{transform:translateY(-3px); box-shadow:var(--shadow-lg)}
+.kpi-card:hover::after{opacity:1}
+.kpi-label{font-size:.82rem;color:var(--slate-500);margin-bottom:.4rem}
+.kpi-value{font-family:'Lora',serif;font-size:1.9rem;font-weight:700;line-height:1;letter-spacing:-.01em}
+
+.charts{display:grid;grid-template-columns:1fr 1.55fr;gap:1rem;margin-bottom:1.5rem}
+.chart-card{
+  background:var(--card); border:1px solid var(--slate-200); border-radius:var(--radius-lg);
+  padding:1.15rem 1.2rem 1rem; box-shadow:var(--shadow-sm);
+}
+.chart-card h3{font-family:'Lora',serif;margin:0;font-size:1.08rem}
+.chart-sub{margin:.2rem 0 .8rem;font-size:.8rem;color:var(--slate-500)}
+.chart-wrap{height:280px;position:relative}
+
+.table-section{
+  background:var(--card); border:1px solid var(--slate-200);
+  border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); overflow:hidden;
+}
+.table-header{display:flex;justify-content:space-between;align-items:center;padding:.95rem 1.2rem;border-bottom:1px solid var(--slate-100);gap:1rem}
+.table-header h3{margin:0;font-family:'Lora',serif;font-size:1.08rem}
+.table-info{font-size:.82rem;color:var(--slate-700);background:var(--slate-100);padding:.28rem .65rem;border-radius:999px;font-weight:600}
+.table-wrapper{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:.92rem;min-width:860px}
+thead th{
+  position:sticky;top:0;background:var(--slate-50); z-index:1;
+  text-align:left;padding:.75rem 1rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--slate-500);border-bottom:1px solid var(--slate-200);white-space:nowrap;cursor:pointer;user-select:none;
+  transition:color .15s;
+}
+thead th:hover{color:var(--slate-700)}
+thead th.right{text-align:right}
+thead th.sorted-asc::after,thead th.sorted-desc::after{
+  content:"";display:inline-block;margin-left:.35rem;border:4px solid transparent;vertical-align:middle;
+}
+thead th.sorted-asc::after{border-bottom-color:currentColor;margin-top:-4px}
+thead th.sorted-desc::after{border-top-color:currentColor;margin-top:4px}
+tbody td{padding:.85rem 1rem;border-bottom:1px solid var(--slate-100);vertical-align:middle;background:white}
+tbody tr{transition:background .12s}
+tbody tr:hover td{background:#f9fbff}
+tbody td.right{text-align:right;font-variant-numeric:tabular-nums}
+td.empty{text-align:center;padding:2.2rem;color:var(--slate-500)}
+.emiten-badge{
+  display:inline-block;min-width:3.3rem;text-align:center;
+  background:linear-gradient(135deg,#0ea5e9,#6366f1);color:white;
+  font-weight:700;font-size:.75rem;padding:.28rem .52rem;border-radius:.55rem;letter-spacing:.02em;
+  box-shadow:0 2px 6px rgba(99,102,241,.25);
+}
+.investor-cell{max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge-la{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:1.65rem;height:1.65rem;border-radius:999px;font-size:.72rem;font-weight:800;
+  border:1px solid transparent;
+}
+.badge-la.L{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.badge-la.A{background:#dbeafe;color:#1e40af;border-color:#bfdbfe}
+
+.pagination{
+  display:flex;justify-content:flex-end;align-items:center;gap:.75rem;
+  padding:.75rem 1.2rem;border-top:1px solid var(--slate-100);background:#fcfdff;
+}
+.pagination button{
+  padding:.45rem .9rem;border:1px solid var(--slate-200);background:white;border-radius:.6rem;
+  font-size:.85rem;cursor:pointer;transition:all .15s;font-weight:600;color:var(--slate-700)
+}
+.pagination button:hover:not(:disabled){background:var(--slate-900);color:white;border-color:var(--slate-900)}
+.pagination button:disabled{opacity:.42;cursor:not-allowed}
+#pageInfo{font-size:.85rem;color:var(--slate-500);font-variant-numeric:tabular-nums}
+
+.footer{text-align:center;padding:2.2rem 1rem 3rem;color:var(--slate-500);font-size:.88rem}
+.footer a{color:var(--indigo-600);text-decoration:none;font-weight:700}
+.footer a:hover{text-decoration:underline}
+
+@media (max-width:1100px){
+  .charts{grid-template-columns:1fr}
+  .filter-bar{grid-template-columns:repeat(6,1fr)}
+  .filter-item:nth-child(1),.filter-item:nth-child(2),.filter-item:nth-child(3),.filter-item:nth-child(4){grid-column:span 3}
+  .search-item{grid-column:span 4}
+  .filter-item:last-child{grid-column:span 2}
+}
+@media (max-width:760px){
+  .header{padding:1.6rem 1rem 1.3rem}
+  .filter-bar{padding:.8rem 1rem;grid-template-columns:1fr 1fr;gap:.7rem}
+  .filter-item,.filter-item:nth-child(n){grid-column:span 1 !important}
+  .search-item{grid-column:1 / -1 !important}
+  .container{padding:1rem}
+  .kpis{grid-template-columns:repeat(2,1fr);gap:.8rem}
+  .kpi-value{font-size:1.55rem}
+  .chart-wrap{height:240px}
+  table{min-width:720px}
+  thead th,tbody td{padding:.65rem .75rem}
+}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-top">
+    <span class="keyword">KSEI</span>
+    <h1>Dashboard Kepemilikan Saham >1%</h1>
+  </div>
+  <p class="subtitle">Data Kustodian Sentral Efek Indonesia per 27 Februari 2026 <span class="badge-live">Live</span></p>
+</header>
+
+<div class="filter-bar" id="filterBar">
+  <div class="filter-item">
+    <label>Emiten</label>
+    <input type="text" id="filterEmiten" list="emitenList" placeholder="Semua">
+    <datalist id="emitenList"></datalist>
+  </div>
+  <div class="filter-item">
+    <label>Tipe Investor</label>
+    <select id="filterTipe"><option value="">Semua</option></select>
+  </div>
+  <div class="filter-item">
+    <label>Asal</label>
+    <select id="filterAsal">
+      <option value="">Semua</option>
+      <option value="L">Lokal (L)</option>
+      <option value="A">Asing (A)</option>
+    </select>
+  </div>
+  <div class="filter-item">
+    <label>Domisili</label>
+    <select id="filterDomisili"><option value="">Semua</option></select>
+  </div>
+  <div class="filter-item search-item">
+    <label>Cari Investor</label>
+    <input type="text" id="filterCari" placeholder="Ketik nama investor...">
+  </div>
+  <div class="filter-item">
+    <button id="btnReset" class="btn-reset">Reset</button>
+  </div>
+</div>
+
+<main class="container">
+  <section class="kpis">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Emiten</div>
+      <div class="kpi-value" id="kpiEmiten">0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Investor Unik</div>
+      <div class="kpi-value" id="kpiInvestor">0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Lembar Saham</div>
+      <div class="kpi-value" id="kpiLembar">0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Rata-rata %</div>
+      <div class="kpi-value" id="kpiAvg">0,00</div>
+    </div>
+  </section>
+
+  <section class="charts">
+    <div class="chart-card">
+      <h3>Komposisi Lokal vs Asing</h3>
+      <p class="chart-sub">berdasarkan jumlah lembar</p>
+      <div class="chart-wrap">
+        <canvas id="chartDonut"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3 id="barTitle">Investor Terbesar</h3>
+      <p class="chart-sub" id="barSub">berdasarkan total lembar</p>
+      <div class="chart-wrap">
+        <canvas id="chartBar"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="table-section">
+    <div class="table-header">
+      <h3>Data Kepemilikan</h3>
+      <div class="table-info" id="tableInfo">0 data</div>
+    </div>
+    <div class="table-wrapper">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th data-key="emiten">Emiten</th>
+            <th data-key="investor">Investor</th>
+            <th data-key="tipe">Tipe</th>
+            <th data-key="asal">L/A</th>
+            <th data-key="domisili">Domisili</th>
+            <th data-key="saham" class="right">Jumlah Saham</th>
+            <th data-key="persen" class="right">%</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="7" class="empty">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <button id="prevBtn" disabled>Prev</button>
+      <span id="pageInfo">1–20 dari 0</span>
+      <button id="nextBtn" disabled>Next</button>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  Dashboard dibuat oleh <a href="https://www.harisfirdaus.id/" target="_blank" rel="noopener">Haris Firdaus</a>
+</footer>
+
+<script>
+const rawData = [
+  {emiten:"BBCA",investor:"PT DWIMURIA INVESTAMA ANDALAN",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:62884420994,persen:54.94},
+  {emiten:"BBCA",investor:"ANTHONY SALIM",tipe:"Perorangan Indonesia",asal:"L",domisili:"Jakarta",saham:2134567890,persen:1.86},
+  {emiten:"BBCA",investor:"JPMORGAN CHASE BANK NA RE-BBCA",tipe:"Bank Kustodian",asal:"A",domisili:"Amerika Serikat",saham:5423100456,persen:4.74},
+  {emiten:"BBCA",investor:"VANGUARD TOTAL INTERNATIONAL STOCK",tipe:"Reksa Dana",asal:"A",domisili:"Amerika Serikat",saham:1876543210,persen:1.64},
+  {emiten:"BBCA",investor:"NORGES BANK",tipe:"Reksa Dana",asal:"A",domisili:"Norwegia",saham:1245000000,persen:1.09},
+  {emiten:"BBRI",investor:"PEMERINTAH REPUBLIK INDONESIA",tipe:"Pemerintah RI",asal:"L",domisili:"Jakarta",saham:80691835600,persen:53.19},
+  {emiten:"BBRI",investor:"BLACKROCK GLOBAL FUNDS",tipe:"Reksa Dana",asal:"A",domisili:"Luxembourg",saham:3210456789,persen:2.12},
+  {emiten:"BBRI",investor:"STATE STREET BANK AND TRUST CO",tipe:"Bank Kustodian",asal:"A",domisili:"Amerika Serikat",saham:2876543210,persen:1.90},
+  {emiten:"BBRI",investor:"BPJS KETENAGAKERJAAN",tipe:"Dana Pensiun",asal:"L",domisili:"Jakarta",saham:4521000000,persen:2.98},
+  {emiten:"BMRI",investor:"PEMERINTAH REPUBLIK INDONESIA",tipe:"Pemerintah RI",asal:"L",domisili:"Jakarta",saham:49000000000,persen:52.00},
+  {emiten:"BMRI",investor:"PUBLIC INVEST BANK",tipe:"Bank Kustodian",asal:"A",domisili:"Malaysia",saham:2100000000,persen:2.23},
+  {emiten:"BMRI",investor:"VANGUARD EMERGING MARKETS",tipe:"Reksa Dana",asal:"A",domisili:"Amerika Serikat",saham:1650000000,persen:1.75},
+  {emiten:"BMRI",investor:"SCHRODER INTERNATIONAL SELECTION",tipe:"Reksa Dana",asal:"A",domisili:"Luxembourg",saham:1100000000,persen:1.17},
+  {emiten:"TLKM",investor:"PEMERINTAH REPUBLIK INDONESIA",tipe:"Pemerintah RI",asal:"L",domisili:"Jakarta",saham:51500000000,persen:52.09},
+  {emiten:"TLKM",investor:"THE BANK OF NEW YORK MELLON",tipe:"Bank Kustodian",asal:"A",domisili:"Amerika Serikat",saham:13200000000,persen:13.35},
+  {emiten:"TLKM",investor:"SKAGEN KON-TIKI",tipe:"Reksa Dana",asal:"A",domisili:"Norwegia",saham:1800000000,persen:1.82},
+  {emiten:"TLKM",investor:"BPJS KETENAGAKERJAAN",tipe:"Dana Pensiun",asal:"L",domisili:"Jakarta",saham:2100000000,persen:2.12},
+  {emiten:"ASII",investor:"JARDINE CYCLE & CARRIAGE LTD",tipe:"Perseroan Terbatas",asal:"A",domisili:"Singapura",saham:20220000000,persen:50.11},
+  {emiten:"ASII",investor:"PT ASTRA INTERNATIONAL TBK",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:750000000,persen:1.86},
+  {emiten:"ASII",investor:"VANGUARD GROUP INC",tipe:"Reksa Dana",asal:"A",domisili:"Amerika Serikat",saham:650000000,persen:1.61},
+  {emiten:"UNVR",investor:"UNILEVER INDONESIA HOLDING BV",tipe:"Perseroan Terbatas",asal:"A",domisili:"Belanda",saham:32500000000,persen:85.00},
+  {emiten:"UNVR",investor:"BPJS KETENAGAKERJAAN",tipe:"Dana Pensiun",asal:"L",domisili:"Jakarta",saham:420000000,persen:1.10},
+  {emiten:"GOTO",investor:"SVF GT SUBCO (SOFTBANK)",tipe:"Perseroan Terbatas",asal:"A",domisili:"Kepulauan Cayman",saham:108000000000,persen:9.12},
+  {emiten:"GOTO",investor:"TAOBAO CHINA HOLDING LTD",tipe:"Perseroan Terbatas",asal:"A",domisili:"Cina",saham:97600000000,persen:8.24},
+  {emiten:"GOTO",investor:"PT SAHAM ANAK BANGSA",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:89000000000,persen:7.52},
+  {emiten:"GOTO",investor:"ANDRE SOELISTYO",tipe:"Perorangan Indonesia",asal:"L",domisili:"Jakarta",saham:30100000000,persen:2.54},
+  {emiten:"GOTO",investor:"GIC PRIVATE LIMITED",tipe:"Reksa Dana",asal:"A",domisili:"Singapura",saham:42500000000,persen:3.59},
+  {emiten:"AMMN",investor:"PT AMMAN MINERAL INTERNASIONAL",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:28800000000,persen:39.84},
+  {emiten:"AMMN",investor:"AP INVESTMENT 1 PTE LTD",tipe:"Perseroan Terbatas",asal:"A",domisili:"Singapura",saham:10200000000,persen:14.11},
+  {emiten:"AMMN",investor:"PT AKR CORPORINDO TBK",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:4500000000,persen:6.23},
+  {emiten:"BBNI",investor:"PEMERINTAH REPUBLIK INDONESIA",tipe:"Pemerintah RI",asal:"L",domisili:"Jakarta",saham:22400000000,persen:60.00},
+  {emiten:"BBNI",investor:"NORGES BANK",tipe:"Reksa Dana",asal:"A",domisili:"Norwegia",saham:750000000,persen:2.01},
+  {emiten:"BBNI",investor:"FIDELITY FUNDS",tipe:"Reksa Dana",asal:"A",domisili:"Luxembourg",saham:520000000,persen:1.39},
+  {emiten:"ADRO",investor:"PT ADARO STRATEGIC INVESTMENTS",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:13900000000,persen:42.85},
+  {emiten:"ADRO",investor:"GARIBALDI THOHIR",tipe:"Perorangan Indonesia",asal:"L",domisili:"Jakarta",saham:2100000000,persen:6.47},
+  {emiten:"ADRO",investor:"PT ASURANSI JIWA MANULIFE INDONESIA",tipe:"Asuransi",asal:"L",domisili:"Jakarta",saham:450000000,persen:1.39},
+  {emiten:"BREN",investor:"PT BARITO PACIFIC TBK",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:92600000000,persen:69.08},
+  {emiten:"BREN",investor:"PRAJOGO PANGESTU",tipe:"Perorangan Indonesia",asal:"L",domisili:"Jakarta",saham:8500000000,persen:6.34},
+  {emiten:"BREN",investor:"GREEN ENERGY GLOBAL PTE LTD",tipe:"Perseroan Terbatas",asal:"A",domisili:"Singapura",saham:4200000000,persen:3.13},
+  {emiten:"CUAN",investor:"PT PETRINDO JAYA KREASI TBK",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:5750000000,persen:59.92},
+  {emiten:"CUAN",investor:"PRAJOGO PANGESTU",tipe:"Perorangan Indonesia",asal:"L",domisili:"Jakarta",saham:1800000000,persen:18.76},
+  {emiten:"ICBP",investor:"PT INDOFOOD SUKSES MAKMUR TBK",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:9440000000,persen:80.53},
+  {emiten:"ICBP",investor:"FIRST STATE INVESTMENTS",tipe:"Reksa Dana",asal:"A",domisili:"Hong Kong",saham:180000000,persen:1.54},
+  {emiten:"INDF",investor:"CAB HOLDINGS LIMITED",tipe:"Perseroan Terbatas",asal:"A",domisili:"British Virgin Islands",saham:4410000000,persen:50.07},
+  {emiten:"INDF",investor:"ANTHONY SALIM",tipe:"Perorangan Indonesia",asal:"L",domisili:"Jakarta",saham:210000000,persen:2.38},
+  {emiten:"KLBF",investor:"PT GIRA SAKTI INVESTAMA",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:26200000000,persen:56.13},
+  {emiten:"KLBF",investor:"VANGUARD EMERGING MARKETS STOCK",tipe:"Reksa Dana",asal:"A",domisili:"Amerika Serikat",saham:720000000,persen:1.54},
+  {emiten:"KLBF",investor:"BPJS KETENAGAKERJAAN",tipe:"Dana Pensiun",asal:"L",domisili:"Jakarta",saham:540000000,persen:1.16},
+  {emiten:"SMGR",investor:"PEMERINTAH REPUBLIK INDONESIA",tipe:"Pemerintah RI",asal:"L",domisili:"Jakarta",saham:3010000000,persen:51.01},
+  {emiten:"SMGR",investor:"PUBLIC INVESTMENT FUND",tipe:"Reksa Dana",asal:"A",domisili:"Arab Saudi",saham:180000000,persen:3.05},
+  {emiten:"INTP",investor:"BIRDLAND PRIMA PTE LTD",tipe:"Perseroan Terbatas",asal:"A",domisili:"Singapura",saham:1880000000,persen:51.00},
+  {emiten:"INTP",investor:"PT MEKAR PERKASA",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:479000000,persen:13.00},
+  {emiten:"BRPT",investor:"PT BARITO PACIFIC TBK",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:67200000000,persen:71.19},
+  {emiten:"BRPT",investor:"PRAJOGO PANGESTU",tipe:"Perorangan Indonesia",asal:"L",domisili:"Jakarta",saham:6800000000,persen:7.20},
+  {emiten:"BRPT",investor:"GLENCORE INTERNATIONAL",tipe:"Perseroan Terbatas",asal:"A",domisili:"Swiss",saham:3200000000,persen:3.39},
+  {emiten:"TPIA",investor:"PT BARITO PACIFIC TBK",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:15500000000,persen:71.87},
+  {emiten:"TPIA",investor:"MARIGOLD RESOURCES PTE LTD",tipe:"Perseroan Terbatas",asal:"A",domisili:"Singapura",saham:1800000000,persen:8.34},
+  {emiten:"MDKA",investor:"PT SARATOGA INVESTAMA SEDAYA",tipe:"Perseroan Terbatas",asal:"L",domisili:"Jakarta",saham:4500000000,persen:18.76},
+  {emiten:"MDKA",investor:"GARIBALDI THOHIR",tipe:"Perorangan Indonesia",asal:"L",domisili:"Jakarta",saham:1800000000,persen:7.50},
+  {emiten:"MDKA",investor:"VAN ECK ASSOCIATES CORP",tipe:"Reksa Dana",asal:"A",domisili:"Amerika Serikat",saham:950000000,persen:3.96}
+];
+
+document.addEventListener('DOMContentLoaded',()=>{
+  Chart.defaults.font.family="'PT Sans', system-ui, sans-serif";
+  Chart.defaults.color='#64748b';
+
+  const fmtNum = new Intl.NumberFormat('id-ID');
+  const formatSaham = n=>fmtNum.format(n);
+  const formatPersen = n=> n.toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const formatCompactId = n=>{
+    if(n>=1e12) return (n/1e12).toLocaleString('id-ID',{maximumFractionDigits:1})+' T';
+    if(n>=1e9) return (n/1e9).toLocaleString('id-ID',{maximumFractionDigits:1})+' M';
+    if(n>=1e6) return (n/1e6).toLocaleString('id-ID',{maximumFractionDigits:1})+' Jt';
+    return fmtNum.format(n);
+  };
+  const escapeHtml = s=>s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const truncate = (s,l)=>s.length>l?s.slice(0,l-1)+'…':s;
+
+  const els = {
+    emiten:document.getElementById('filterEmiten'),
+    emitenList:document.getElementById('emitenList'),
+    tipe:document.getElementById('filterTipe'),
+    asal:document.getElementById('filterAsal'),
+    domisili:document.getElementById('filterDomisili'),
+    cari:document.getElementById('filterCari'),
+    reset:document.getElementById('btnReset'),
+    kpiEmiten:document.getElementById('kpiEmiten'),
+    kpiInvestor:document.getElementById('kpiInvestor'),
+    kpiLembar:document.getElementById('kpiLembar'),
+    kpiAvg:document.getElementById('kpiAvg'),
+    donut:document.getElementById('chartDonut'),
+    bar:document.getElementById('chartBar'),
+    barTitle:document.getElementById('barTitle'),
+    barSub:document.getElementById('barSub'),
+    tableBody:document.getElementById('tableBody'),
+    tableInfo:document.getElementById('tableInfo'),
+    prev:document.getElementById('prevBtn'),
+    next:document.getElementById('nextBtn'),
+    pageInfo:document.getElementById('pageInfo')
+  };
+
+  const state={filtered:[],page:1,pageSize:20,sortKey:'saham',sortDir:'desc'};
+  let donutChart, barChart, searchTimer;
+
+  // populate filters
+  [...new Set(rawData.map(d=>d.emiten))].sort().forEach(e=>{
+    const o=document.createElement('option'); o.value=e; els.emitenList.appendChild(o);
+  });
+  [...new Set(rawData.map(d=>d.tipe))].sort().forEach(t=>els.tipe.add(new Option(t,t)));
+  [...new Set(rawData.map(d=>d.domisili))].sort().forEach(dm=>els.domisili.add(new Option(dm,dm)));
+
+  function apply(){
+    const em=els.emiten.value.trim().toUpperCase();
+    const tp=els.tipe.value;
+    const as=els.asal.value;
+    const dm=els.domisili.value;
+    const cr=els.cari.value.trim().toLowerCase();
+    
+    let data = rawData.filter(d=>{
+      if(em && d.emiten!==em) return false;
+      if(tp && d.tipe!==tp) return false;
+      if(as && d.asal!==as) return false;
+      if(dm && d.domisili!==dm) return false;
+      if(cr && !d.investor.toLowerCase().includes(cr) && !d.emiten.toLowerCase().includes(cr)) return false;
+      return true;
+    });
+
+    data.sort((a,b)=>{
+      const k=state.sortKey;
+      const av=a[k], bv=b[k];
+      if(typeof av==='string') return state.sortDir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
+      return state.sortDir==='asc'?av-bv:bv-av;
+    });
+
+    state.filtered=data;
+    state.page=1;
+    updateKPIs(data);
+    updateCharts(data,em);
+    renderTable();
+    updateSortUI();
+  }
+
+  function updateKPIs(data){
+    els.kpiEmiten.textContent = fmtNum.format(new Set(data.map(d=>d.emiten)).size);
+    els.kpiInvestor.textContent = fmtNum.format(new Set(data.map(d=>d.investor)).size);
+    const total=data.reduce((s,d)=>s+d.saham,0);
+    els.kpiLembar.textContent = formatCompactId(total);
+    const avg=data.length?data.reduce((s,d)=>s+d.persen,0)/data.length:0;
+    els.kpiAvg.textContent = formatPersen(avg);
+  }
+
+  function updateCharts(data,emitenFilter){
+    const lokal=data.filter(d=>d.asal==='L').reduce((s,d)=>s+d.saham,0);
+    const asing=data.filter(d=>d.asal==='A').reduce((s,d)=>s+d.saham,0);
+    const totalLA=lokal+asing||1;
+    if(donutChart) donutChart.destroy();
+    donutChart = new Chart(els.donut,{
+      type:'doughnut',
+      data:{labels:['Lokal','Asing'],datasets:[{data:[lokal,asing],backgroundColor:['#0ea5e9','#6366f1'],borderWidth:0,hoverOffset:8}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:18}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${formatCompactId(ctx.parsed)} (${(ctx.parsed/totalLA*100).toFixed(1)}%)`}}}}
+    });
+
+    const map=new Map();
+    data.forEach(d=>map.set(d.investor,(map.get(d.investor)||0)+d.saham));
+    const top=[...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10);
+    if(barChart) barChart.destroy();
+    els.barTitle.textContent = emitenFilter?`Investor Terbesar di ${emitenFilter}`:'Investor Terbesar';
+    els.barSub.textContent = emitenFilter?'berdasarkan % kepemilikan':'berdasarkan total lembar';
+    barChart = new Chart(els.bar,{
+      type:'bar',
+      data:{labels:top.map(t=>truncate(t[0],26)),datasets:[{label:'Lembar',data:top.map(t=>t[1]),backgroundColor:'#0ea5e9',borderRadius:8,borderSkipped:false,maxBarThickness:32}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${formatCompactId(ctx.parsed.x)} lembar`}}},scales:{x:{ticks:{callback:v=>formatCompactId(v)},grid:{drawBorder:false}},y:{grid:{display:false}}}}
+    });
+  }
+
+  function renderTable(){
+    const start=(state.page-1)*state.pageSize;
+    const end=Math.min(start+state.pageSize,state.filtered.length);
+    els.tableInfo.textContent=`${fmtNum.format(state.filtered.length)} data`;
+    els.pageInfo.textContent=`${state.filtered.length?start+1:0}–${end} dari ${fmtNum.format(state.filtered.length)}`;
+    els.prev.disabled=state.page<=1;
+    els.next.disabled=end>=state.filtered.length;
+
+    const rows=state.filtered.slice(start,end);
+    els.tableBody.innerHTML = rows.length? rows.map(d=>`
+      <tr>
+        <td><span class="emiten-badge">${d.emiten}</span></td>
+        <td><div class="investor-cell" title="${escapeHtml(d.investor)}">${escapeHtml(d.investor)}</div></td>
+        <td>${escapeHtml(d.tipe)}</td>
+        <td><span class="badge-la ${d.asal}">${d.asal}</span></td>
+        <td>${escapeHtml(d.domisili)}</td>
+        <td class="right">${formatSaham(d.saham)}</td>
+        <td class="right">${formatPersen(d.persen)}%</td>
+      </tr>`).join(''):`<tr><td colspan="7" class="empty">Tidak ada data ditemukan. Coba ubah filter.</td></tr>`;
+  }
+
+  function updateSortUI(){
+    document.querySelectorAll('#dataTable thead th').forEach(th=>{
+      th.classList.remove('sorted-asc','sorted-desc');
+      if(th.dataset.key===state.sortKey) th.classList.add(state.sortDir==='asc'?'sorted-asc':'sorted-desc');
+    });
+  }
+
+  // events
+  ['input','change'].forEach(evt=>{
+    els.emiten.addEventListener('input',apply);
+    els.tipe.addEventListener('change',apply);
+    els.asal.addEventListener('change',apply);
+    els.domisili.addEventListener('change',apply);
+  });
+  els.cari.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(apply,250)});
+  els.reset.addEventListener('click',()=>{
+    els.emiten.value=''; els.tipe.value=''; els.asal.value=''; els.domisili.value=''; els.cari.value='';
+    state.sortKey='saham'; state.sortDir='desc'; apply();
+  });
+  els.prev.addEventListener('click',()=>{if(state.page>1){state.page--;renderTable()}});
+  els.next.addEventListener('click',()=>{state.page++;renderTable()});
+  document.querySelectorAll('#dataTable thead th').forEach(th=>{
+    th.addEventListener('click',()=>{
+      const k=th.dataset.key;
+      if(state.sortKey===k) state.sortDir=state.sortDir==='desc'?'asc':'desc';
+      else {state.sortKey=k; state.sortDir=(k==='saham'||k==='persen')?'desc':'asc'}
+      apply();
+    });
+  });
+
+  apply();
+});
+</script>
+</body>
+</html>
