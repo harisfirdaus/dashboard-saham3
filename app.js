@@ -229,13 +229,13 @@ function updateCharts(cariActive) {
   });
 }
 
-function truncate(str, n){ return str.length>n ? str.slice(0,n-1)+'â€¦' : str; }
+function truncate(str, n){ return str.length>n ? str.slice(0,n-1)+'…' : str; }
 
 function renderTable() {
   const tbody = document.getElementById('tableBody');
   if (!filteredData.length) {
     tbody.innerHTML = `<tr><td colspan="7" class="empty">Tidak ada data</td></tr>`;
-    document.getElementById('pageInfo').textContent = '0â€“0 dari 0';
+    document.getElementById('pageInfo').textContent = '0–0 dari 0';
     document.getElementById('prevBtn').disabled = true;
     document.getElementById('nextBtn').disabled = true;
     return;
@@ -277,7 +277,7 @@ function renderTable() {
   
   const total = filteredData.length;
   const end = Math.min(start+pageSize, total);
-  document.getElementById('pageInfo').textContent = `${fmtID.format(start+1)}â€“${fmtID.format(end)} dari ${fmtID.format(total)}`;
+  document.getElementById('pageInfo').textContent = `${fmtID.format(start+1)}–${fmtID.format(end)} dari ${fmtID.format(total)}`;
   document.getElementById('prevBtn').disabled = currentPage===1;
   document.getElementById('nextBtn').disabled = end>=total;
 }
